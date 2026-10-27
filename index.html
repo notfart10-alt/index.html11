@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HACK TERMINAL</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    color: #00ff66;
+    font-family: "Courier New", monospace;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Falling hacker letters */
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    opacity: 0.65;
+}
+
+.scanlines {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: repeating-linear-gradient(
+        transparent 0px,
+        rgba(0,255,80,0.025) 2px,
+        transparent 4px
+    );
+}
+
+.container {
+    position: relative;
+    z-index: 3;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.panel {
+    width: 100%;
+    max-width: 520px;
+    background: rgba(0, 8, 3, 0.94);
+    border: 1px solid #00ff66;
+    border-radius: 12px;
+    padding: 35px 25px;
+    text-align: center;
+    box-shadow:
+        0 0 20px #00ff6644,
+        inset 0 0 25px #00ff6610;
+}
+
+.logo {
+    font-size: 13px;
+    letter-spacing: 5px;
+    color: #00aa44;
+    margin-bottom: 18px;
+}
+
+h1 {
+    font-size: clamp(28px, 7vw, 42px);
+    text-shadow: 0 0 12px #00ff66;
+    margin-bottom: 12px;
+    animation: flicker 3s infinite;
+}
+
+.subtitle {
+    color: #72b98a;
+    font-size: 12px;
+    margin-bottom: 30px;
+}
+
+input {
+    width: 100%;
+    padding: 16px;
+    background: #000;
+    border: 1px solid #00ff66;
+    color: #00ff66;
+    outline: none;
+    font: inherit;
+    font-size: 15px;
+    text-align: center;
+    border-radius: 5px;
+    box-shadow: 0 0 10px #00ff6622;
+}
+
+input:focus {
+    box-shadow: 0 0 18px #00ff6677;
+}
+
+button {
+    margin-top: 18px;
+    width: 100%;
+    padding: 16px;
+    background: #00ff66;
+    color: #001a08;
+    border: none;
+    border-radius: 5px;
+    font: bold 16px "Courier New", monospace;
+    cursor: pointer;
+    transition: 0.25s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+button:hover {
+    background: #aaffc4;
+    box-shadow: 0 0 25px #00ff66;
+    transform: scale(1.02);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: wait;
+    transform: none;
+}
+
+.terminal {
+    margin-top: 25px;
+    height: 135px;
+    overflow: auto;
+    text-align: left;
+    border-top: 1px solid #164b29;
+    padding-top: 15px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #00ff66;
+    overflow-wrap: anywhere;
+}
+
+.line {
+    animation: appear 0.25s ease-out;
+}
+
+.success {
+    color: #fff;
+    text-shadow: 0 0 10px #00ff66;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+.footer {
+    margin-top: 18px;
+    font-size: 10px;
+    color: #39784c;
+    letter-spacing: 2px;
+}
+
+@keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.6; }
+    97% { opacity: 1; }
+    98% { opacity: 0.8; }
+}
+
+@keyframes appear {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+<div class="scanlines"></div>
+
+<div class="container">
+    <main class="panel">
+
+        <div class="logo">[ UNDERGROUND NETWORK ]</div>
+
+        <h1>HACK TERMINAL</h1>
+
+        <p class="subtitle">
+            SYSTEM ACCESS PORTAL // SIMULATION MODE
+        </p>
+
+        <form id="hackForm">
+            <input
+                id="username"
+                type="text"
+                placeholder="Type in username"
+                maxlength="40"
+                autocomplete="off"
+                required
+            >
+
+            <button id="hackButton" type="submit">
+                Get password
+            </button>
+        </form>
+
+        <div class="terminal" id="terminal" aria-live="polite">
+            <div class="line">> Initializing terminal...</div>
+            <div class="line">> Encryption engine loaded.</div>
+            <div class="line">> Awaiting username input...</div>
+        </div>
+
+        <div class="footer">
+            SECURE SHELL // FUN SIMULATION ONLY
+        </div>
+
+    </main>
+</div>
+
+<script>
+// MATRIX RAIN BACKGROUND
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+
+const chars =
+    "アイウエオカキクケコ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@%&";
+
+let fontSize = 16;
+let drops = [];
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const columns = Math.ceil(canvas.width / fontSize);
+    drops = Array.from(
+        { length: columns },
+        () => Math.random() * -canvas.height / fontSize
+    );
+}
+
+function drawMatrix() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+        const char = chars[
+            Math.floor(Math.random() * chars.length)
+        ];
+
+        ctx.fillStyle = Math.random() > 0.97
+            ? "#ffffff"
+            : "#00ff66";
+
+        ctx.fillText(
+            char,
+            i * fontSize,
+            drops[i] * fontSize
+        );
+
+        if (
+            drops[i] * fontSize > canvas.height &&
+            Math.random() > 0.975
+        ) {
+            drops[i] = 0;
+        }
+
+        drops[i] += 0.45;
+    }
+
+    requestAnimationFrame(drawMatrix);
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+drawMatrix();
+
+
+// FAKE HACKING SEQUENCE
+const form = document.getElementById("hackForm");
+const usernameInput = document.getElementById("username");
+const button = document.getElementById("hackButton");
+const terminal = document.getElementById("terminal");
+
+const sleep = ms =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+function addLine(text, className = "") {
+    const line = document.createElement("div");
+    line.className = "line " + className;
+    line.textContent = "> " + text;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+}
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const username = usernameInput.value.trim();
+    if (!username) return;
+
+    button.disabled = true;
+    usernameInput.disabled = true;
+    button.textContent = "Hacking...";
+
+    terminal.replaceChildren();
+
+    const steps = [
+        "Connecting to imaginary server...",
+        "Scanning virtual network nodes...",
+        "Bypassing fake firewall...",
+        "Decrypting simulated data packets...",
+        "Running cybersecurity cinematic sequence...",
+        "Generating fictional access credentials...",
+        "Finalizing simulation..."
+    ];
+
+    for (const step of steps) {
+        addLine(step);
+        await sleep(650 + Math.random() * 500);
+
+        // Decorative random hexadecimal output
+        if (Math.random() > 0.35) {
+            const fakeCode = Array.from(
+                { length: 4 },
+                () => Math.floor(Math.random() * 65536)
+                    .toString(16)
+                    .padStart(4, "0")
+            ).join(" ");
+
+            addLine("0x" + fakeCode.toUpperCase());
+            await sleep(250);
+        }
+    }
+
+    addLine("Target username: " + username);
+    await sleep(600);
+
+    addLine("SIMULATION COMPLETE", "success");
+    addLine("Hack succesful, Sommar83", "success");
+
+    button.textContent = "Run again";
+    button.disabled = false;
+    usernameInput.disabled = false;
+    usernameInput.value = "";
+});
+
+// Optional: press Enter to run the simulation.
+</script>
+
+</body>
+</html>
